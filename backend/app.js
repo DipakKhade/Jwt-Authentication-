@@ -1,8 +1,10 @@
 import express from 'express'
 import cors from 'cors'
-import { siteConfig } from './sitedata/siteConfig.js';
 import Jwt  from 'jsonwebtoken';
 import {z} from 'zod'
+import { PrismaClient } from '@prisma/client';
+
+const prisma=new PrismaClient()
 
 const app=express();
 
@@ -19,25 +21,33 @@ const zsignup= z.object({
 
 })
 
-//give tokens to users
 
-app.post('/signuptoken',function(req,res){
+//give tokens to users
+app.post('/signuptoken',async function(req,res){
     const reqbody=req.body
     const userData=zsignup.safeParse(reqbody)
-    console.log(userData)
+    // console.log(userData)
+
   
 if(!userData.success){
     res.json({'message':'add right information'})
     console.log(userData.error)
 }
 else{
-    const token=Jwt.sign(userData.data,'scretekeyforjet')
-    res.json({'token':token})
+    const Sessiontoken=Jwt.sign(userData.data,'scretekeyforjet')
+    res.json({'token':Sessiontoken})
+
+await prisma.token.create({
+    data:{
+        email:req.body.email,
+        password:req.body.password,
+        token:Sessiontoken
+    }
+})
+
 }
    
 })
-
-
 
 
 // vrifying the tokens
